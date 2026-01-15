@@ -1,19 +1,15 @@
 "use server";
 
-import { prisma } from "@/lib/db";
+import {
+  getDishes as getDishesFromStore,
+  createDish as createDishInStore,
+  toggleFavorite as toggleFavoriteInStore,
+  deleteDish as deleteDishFromStore,
+} from "@/lib/store";
 import { revalidatePath } from "next/cache";
 
 export async function getDishes() {
-  return prisma.dish.findMany({
-    include: {
-      ingredients: {
-        include: {
-          ingredient: true,
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  return getDishesFromStore();
 }
 
 export async function createDish(data: {
@@ -24,43 +20,19 @@ export async function createDish(data: {
   prepTime?: number;
   ingredientIds: string[];
 }) {
-  const { ingredientIds, ...dishData } = data;
-
-  const dish = await prisma.dish.create({
-    data: {
-      ...dishData,
-      ingredients: {
-        create: ingredientIds.map((ingredientId) => ({
-          ingredientId,
-        })),
-      },
-    },
-    include: {
-      ingredients: {
-        include: {
-          ingredient: true,
-        },
-      },
-    },
-  });
-
+  const dish = createDishInStore(data);
   revalidatePath("/dishes");
   revalidatePath("/");
   return dish;
 }
 
 export async function toggleFavorite(id: string, isFavorite: boolean) {
-  const dish = await prisma.dish.update({
-    where: { id },
-    data: { isFavorite },
-  });
+  const dish = toggleFavoriteInStore(id, isFavorite);
   revalidatePath("/dishes");
   return dish;
 }
 
 export async function deleteDish(id: string) {
-  await prisma.dish.delete({
-    where: { id },
-  });
+  deleteDishFromStore(id);
   revalidatePath("/dishes");
 }

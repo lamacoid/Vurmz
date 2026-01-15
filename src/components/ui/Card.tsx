@@ -37,4 +37,4 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 
 Card.displayName = "Card";
 
-export const AnimatedCard = motion(Card);
+export const AnimatedCard = motion.create(Card);

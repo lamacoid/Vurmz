@@ -1,27 +1,20 @@
 "use server";
 
-import { prisma } from "@/lib/db";
+import {
+  getIngredients as getIngredientsFromStore,
+  getIngredientsGroupedByCategory as getGroupedFromStore,
+  addIngredient as addIngredientToStore,
+  toggleIngredientStock as toggleStock,
+  deleteIngredient as deleteFromStore,
+} from "@/lib/store";
 import { revalidatePath } from "next/cache";
 
 export async function getIngredients() {
-  return prisma.ingredient.findMany({
-    orderBy: [{ category: "asc" }, { name: "asc" }],
-  });
+  return getIngredientsFromStore();
 }
 
 export async function getIngredientsGroupedByCategory() {
-  const ingredients = await prisma.ingredient.findMany({
-    orderBy: [{ category: "asc" }, { name: "asc" }],
-  });
-
-  const grouped: Record<string, typeof ingredients> = {};
-  for (const ingredient of ingredients) {
-    if (!grouped[ingredient.category]) {
-      grouped[ingredient.category] = [];
-    }
-    grouped[ingredient.category].push(ingredient);
-  }
-  return grouped;
+  return getGroupedFromStore();
 }
 
 export async function addIngredient(data: {
@@ -29,28 +22,21 @@ export async function addIngredient(data: {
   category: string;
   emoji?: string;
 }) {
-  const ingredient = await prisma.ingredient.create({
-    data,
-  });
+  const ingredient = addIngredientToStore(data);
   revalidatePath("/ingredients");
   revalidatePath("/");
   return ingredient;
 }
 
 export async function toggleIngredientStock(id: string, inStock: boolean) {
-  const ingredient = await prisma.ingredient.update({
-    where: { id },
-    data: { inStock },
-  });
+  const ingredient = toggleStock(id, inStock);
   revalidatePath("/ingredients");
   revalidatePath("/");
   return ingredient;
 }
 
 export async function deleteIngredient(id: string) {
-  await prisma.ingredient.delete({
-    where: { id },
-  });
+  deleteFromStore(id);
   revalidatePath("/ingredients");
   revalidatePath("/");
 }
