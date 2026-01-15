@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Ingredient {
+  id        String   @id @default(cuid())
+  name      String
+  category  String
+  emoji     String?
+  inStock   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dishes    DishIngredient[]
+
+  @@unique([name])
+}
+
+model Dish {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  cuisine     String?
+  difficulty  String   @default("Medium")
+  prepTime    Int?     // in minutes
+  isFavorite  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ingredients DishIngredient[]
+}
+
+model DishIngredient {
+  id           String     @id @default(cuid())
+  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  dishId       String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  ingredientId String
+  amount       String?
+
+  @@unique([dishId, ingredientId])
+}
